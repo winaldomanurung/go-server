@@ -1,13 +1,39 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	db, err := sql.Open("mysql", "root:admin123@(127.0.0.1:3306)/go-server?parseTime=true")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	{ // Create a new table
+		query := `
+            CREATE TABLE users (
+                id INT AUTO_INCREMENT,
+                username TEXT NOT NULL,
+                password TEXT NOT NULL,
+                created_at DATETIME,
+                PRIMARY KEY (id)
+            );`
+
+		if _, err := db.Exec(query); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	r := mux.NewRouter()
 
 	r.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
@@ -25,5 +51,5 @@ func main() {
 		fmt.Fprintf(w, "Welcome to my website!")
 	})
 
-	http.ListenAndServe(":80", r)
+	http.ListenAndServe(":8080", r)
 }
